@@ -1,3 +1,4 @@
 # SterileSwarm
 
-[Simulation here](https://blakeelias.github.io/SterileSwarm/advanced_template.html)
+[Template simulation](https://blakeelias.github.io/SterileSwarm/template.html)
+[Actual simulation](https://blakeelias.github.io/SterileSwarm/swarm.html)

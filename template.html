@@ -1,0 +1,71 @@
+<html>
+  <head>
+    <title>Simple Model</title>
+    <script src="agentbase/lib/agentbase.js"></script>
+    <script src="agentbase/tools/coffee-script.js"></script>
+    <script type="text/coffeescript">
+    # AgentBase is Free Software, available under GPL v3 or any later version.
+    # Original AgentScript code @ 2013, 2014 Owen Densmore and RedfishGroup LLC.
+    # AgentBase (c) 2014, Wybo Wiersma.
+
+    # This model shows the basic structure of a model and is a good
+    # place to get started when you want to try building your own.
+    #
+    # To build your own model, extend class ABM.Model supplying the 
+    # two built in methods `setup` and `step`.
+    #
+    #`@foo` signifies a variable or method that is part of the Model
+    # class.
+    #
+    # Note how this example uses CoffeeScript directly within the
+    # browser via [text/coffeescript tags](http://coffeescript.org/#scripts):
+    
+    u = ABM.util # shortcut for ABM.util, some tools
+
+    log = (arg) -> console.log arg # log to the browser console
+
+    class ABM.TemplateModel extends ABM.Model
+      # Initialize our model via the `setup` method. This model simply
+      # creates a population of agents with arbitrary shapes on a grid
+      # of patches colored in random shades of gray.
+      #
+      setup: -> # called by Model constructor
+        # When agents move, they will wiggle. This sets the 
+        # degrees/radians to wiggle, which is used further below.
+        #
+        @wiggle = u.degreesToRadians(30)
+
+        for patch in @patches.create()
+          patch.color = u.color.random "gray"
+
+        for agent in @agents.create 25
+          agent.size = 3
+          agent.shape = u.shapes.names().sample()
+
+      # Update, or run our model for one step, via the second built in
+      # method, `step`.
+      #
+      # The agents wiggle, and move forward.
+      #
+      step: -> # called by Model.animate
+        for agent in @agents
+          agent.rotate u.randomCentered @wiggle
+          agent.forward 1
+
+    # Now that we've build our class, we call it with Model's
+    # constructor arguments:
+    #
+    #   div: name of the div
+    #   isTorus: map curls around the edges = has torus topology.
+    #
+    model = new ABM.TemplateModel({
+      div: "world",
+      isTorus: true
+    })
+    model.start()
+    </script>
+  </head>
+  <body>
+    <div id="world"></div>
+  </body>
+</html>
