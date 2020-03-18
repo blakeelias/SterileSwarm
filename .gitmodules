@@ -1,0 +1,3 @@
+[submodule "agentbase"]
+	path = agentbase
+	url = https://github.com/wybo/agentbase.git
