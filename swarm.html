@@ -38,9 +38,10 @@
         for patch in @patches.create()
           patch.color = u.color.random "gray"
 
-        for agent in @agents.create 25
-          agent.size = 3
-          agent.shape = u.shapes.names().sample()
+        for agent in @agents.create 1
+          agent.size = 2
+          # agent.shape = u.shapes.names().sample()
+          agent.shape = "circle"
 
       # Update, or run our model for one step, via the second built in
       # method, `step`.
@@ -49,8 +50,9 @@
       #
       step: -> # called by Model.animate
         for agent in @agents
-          agent.rotate u.randomCentered @wiggle
-          agent.forward 1
+          if Math.random() < 0.1
+            agent.rotate u.randomCentered @wiggle
+          agent.forward .1
 
     # Now that we've build our class, we call it with Model's
     # constructor arguments:
