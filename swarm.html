@@ -36,13 +36,16 @@
         @wiggle = u.degreesToRadians(30)
 
         for patch in @patches.create()
-          patch.color = u.color.random "gray"
+          #patch.color = u.color.random "gray"
+          patch.color = u.color.fromName "gray"
 
         for agent in @agents.create 1
           agent.size = 2
           # agent.shape = u.shapes.names().sample()
-          agent.shape = "circle"
-
+          agent.shape = "filledRing"
+          agent.strokeColor = u.color.fromName "black"
+          agent.color = u.color.fromName "white"
+        
       # Update, or run our model for one step, via the second built in
       # method, `step`.
       #
@@ -50,8 +53,9 @@
       #
       step: -> # called by Model.animate
         for agent in @agents
-          if Math.random() < 0.1
+          if Math.random() < 0.01
             agent.rotate u.randomCentered @wiggle
+            console.log("wiggling")
           agent.forward .1
 
     # Now that we've build our class, we call it with Model's
@@ -62,7 +66,7 @@
     #
     model = new ABM.TemplateModel({
       div: "world",
-      isTorus: true
+      isTorus: false
     })
     model.start()
     </script>
