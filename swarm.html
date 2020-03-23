@@ -27,12 +27,32 @@
     background_color = u.color.fromName "black"
     healthy_color = u.color.fromName "white"
 
+    initial_viral_load = 100.0
+
     virus_color = (viral_load) ->
-        viral_load = Math.min(viral_load, 1.0)
-        viral_load = Math.max(viral_load, 0.0)
-        redness = 255 * (1.0 - viral_load)
+        log_load = Math.log(viral_load) / Math.log(10)
+        min_scale_visible = -3
+        max_scale_visible = Math.log(initial_viral_load) / Math.log(10)
+        scale = (log_load - min_scale_visible) / (max_scale_visible - min_scale_visible)
+        # debugger;
+        scale = Math.min(scale, 1.0)
+        scale = Math.max(scale, 0.0)
+        redness = 255 * (1.0 - scale)
         return u.color.from([255, redness, redness])
 
+    transfer_virus = (entity1, entity2, amount) ->
+        # entity1 transfers to entity2
+        # ratio = 0.1
+        # transfer = entity1.viral_load * ratio
+
+        # Does entity1 have this amount of viral load to give?
+        transfer = Math.min(amount, entity1.viral_load)
+        # If so, give it all to entity2 (or whatever's left):
+        entity1.viral_load -= transfer
+        entity2.viral_load += transfer
+
+        entity1.color = virus_color(entity1.viral_load)
+        entity2.color = virus_color(entity2.viral_load)
 
     class ABM.TemplateModel extends ABM.Model
       # Initialize our model via the `setup` method. This model simply
@@ -87,7 +107,7 @@
           agent.position = {x: 16, y: 16}
 
           # Initial viral load
-          agent.viral_load = 0.5
+          agent.viral_load = initial_viral_load
           agent.color = virus_color(agent.viral_load)
         
       # Update, or run our model for one step, via the second built in
@@ -113,15 +133,12 @@
 
           # Patch infects agent
           if agent.patch.color != background_color
-            agent.viral_load += 0.1 * agent.patch.viral_load
-            agent.color = virus_color(agent.viral_load)
+            transfer_virus(agent.patch, agent, 0.1)
 
           # Agent infects patches
           for patch in agent.patch.diamondNeighbors(1, true)
             if patch.color != background_color
-              patch.viral_load += 0.1 * agent.viral_load
-              patch.color = virus_color(patch.viral_load)
-            # agent.viral_load
+              transfer_virus(agent, patch, 0.02)
 
     # Now that we've build our class, we call it with Model's
     # constructor arguments:
