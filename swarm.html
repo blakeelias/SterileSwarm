@@ -27,6 +27,13 @@
     background_color = u.color.fromName "black"
     healthy_color = u.color.fromName "white"
 
+    virus_color = (viral_load) ->
+        viral_load = Math.min(viral_load, 1.0)
+        viral_load = Math.max(viral_load, 0.0)
+        redness = 255 * (1.0 - viral_load)
+        return u.color.from([255, redness, redness])
+
+
     class ABM.TemplateModel extends ABM.Model
       # Initialize our model via the `setup` method. This model simply
       # creates a population of agents with arbitrary shapes on a grid
@@ -66,7 +73,7 @@
 
           surface = inside_box_1 || inside_box_2 || inside_box_3 || inside_box_4 || inside_box_5 || inside_box_6
           patch.color = healthy_color if surface
-
+          patch.viral_load = 0
 
         console.log(x_min, x_max)
         console.log(y_min, y_max)
@@ -76,10 +83,12 @@
           # agent.shape = u.shapes.names().sample()
           agent.shape = "filledRing"
           agent.strokeColor = u.color.fromName "gray"
-          agent.color = u.color.fromName "red"
           agent.heading = u.degreesToRadians(120)
           agent.position = {x: 16, y: 16}
-          agent.viral_load = 1.0
+
+          # Initial viral load
+          agent.viral_load = 0.5
+          agent.color = virus_color(agent.viral_load)
         
       # Update, or run our model for one step, via the second built in
       # method, `step`.
@@ -88,19 +97,30 @@
       #
       step: -> # called by Model.animate
         for agent in @agents
+          # Wiggle?
           if Math.random() < 0.01
             agent.rotate u.randomCentered @wiggle
             console.log("wiggling")
+
+          # Step forward
           agent.forward 1
-          #reflection = u.degreesToRadians(90)
-          #agent.rotate  if agent.position.x > this.world.max.x - 1
+
+
+          # Bounce off edges
           agent.heading = u.degreesToRadians(180) - agent.heading if agent.position.x > this.world.max.x - 1 || agent.position.x < this.world.min.x + 1
           agent.heading = -agent.heading if agent.position.y > this.world.max.y - 1 || agent.position.y < this.world.min.y + 1
 
 
+          # Patch infects agent
+          if agent.patch.color != background_color
+            agent.viral_load += 0.1 * agent.patch.viral_load
+            agent.color = virus_color(agent.viral_load)
+
+          # Agent infects patches
           for patch in agent.patch.diamondNeighbors(1, true)
             if patch.color != background_color
-              patch.color = agent.color
+              patch.viral_load += 0.1 * agent.viral_load
+              patch.color = virus_color(patch.viral_load)
             # agent.viral_load
 
     # Now that we've build our class, we call it with Model's
