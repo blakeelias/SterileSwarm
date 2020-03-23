@@ -24,6 +24,9 @@
 
     log = (arg) -> console.log arg # log to the browser console
 
+    background_color = u.color.fromName "black"
+    healthy_color = u.color.fromName "white"
+
     class ABM.TemplateModel extends ABM.Model
       # Initialize our model via the `setup` method. This model simply
       # creates a population of agents with arbitrary shapes on a grid
@@ -33,18 +36,50 @@
         # When agents move, they will wiggle. This sets the 
         # degrees/radians to wiggle, which is used further below.
         #
-        @wiggle = u.degreesToRadians(30)
+        @wiggle = u.degreesToRadians(0)
+
+        x_min = 100000
+        x_max = -100000
+
+        y_min = x_min
+        y_max = x_max
+
 
         for patch in @patches.create()
-          #patch.color = u.color.random "gray"
-          patch.color = u.color.fromName "gray"
+          patch.color = background_color
+          x_min = patch.position.x if patch.position.x < x_min
+          x_max = patch.position.x if patch.position.x > x_max
+
+          y_min = patch.position.y if patch.position.y < y_min
+          y_max = patch.position.y if patch.position.y > y_max
+
+          x = patch.position.x
+          y = patch.position.y
+
+          inside_box_1 = (x > 16 && x < 32 && y > -31 && y < -22)
+          inside_box_2 = (x > -31 && x < -16 && y > 22 && y < 32)
+          inside_box_3 = (x > -31 && x < -21 && y > -31 && y < -16)
+          inside_box_4 = (x > 22 && x < 32 && y > 16 && y < 32)
+
+          inside_box_5 = (x > 16 && x < 26 && y > -5 && y < 5)
+          inside_box_6 = (x > -26 && x < -16 && y > -5 && y < 5)
+
+          surface = inside_box_1 || inside_box_2 || inside_box_3 || inside_box_4 || inside_box_5 || inside_box_6
+          patch.color = healthy_color if surface
+
+
+        console.log(x_min, x_max)
+        console.log(y_min, y_max)
 
         for agent in @agents.create 1
           agent.size = 2
           # agent.shape = u.shapes.names().sample()
           agent.shape = "filledRing"
           agent.strokeColor = u.color.fromName "gray"
-          agent.color = u.color.fromName "white"
+          agent.color = u.color.fromName "red"
+          agent.heading = u.degreesToRadians(120)
+          agent.position = {x: 16, y: 16}
+          agent.viral_load = 1.0
         
       # Update, or run our model for one step, via the second built in
       # method, `step`.
@@ -56,7 +91,17 @@
           if Math.random() < 0.01
             agent.rotate u.randomCentered @wiggle
             console.log("wiggling")
-          agent.forward .1
+          agent.forward 1
+          #reflection = u.degreesToRadians(90)
+          #agent.rotate  if agent.position.x > this.world.max.x - 1
+          agent.heading = u.degreesToRadians(180) - agent.heading if agent.position.x > this.world.max.x - 1 || agent.position.x < this.world.min.x + 1
+          agent.heading = -agent.heading if agent.position.y > this.world.max.y - 1 || agent.position.y < this.world.min.y + 1
+
+
+          for patch in agent.patch.diamondNeighbors(1, true)
+            if patch.color != background_color
+              patch.color = agent.color
+            # agent.viral_load
 
     # Now that we've build our class, we call it with Model's
     # constructor arguments:
@@ -66,7 +111,9 @@
     #
     model = new ABM.TemplateModel({
       div: "world",
-      isTorus: false
+      isTorus: false,
+      patchSize: 4,
+      mapSize: 64
     })
     model.start()
     </script>
